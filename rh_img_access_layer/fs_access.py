@@ -80,6 +80,34 @@ class FSAccessRegistry(object):
         # should not reach here
         return None
 
+    def isdir(self, url):
+        parsed_url = urlparse(url)
+        if parsed_url.scheme == "file":
+            url_unique_id = "osfs:///"
+        else:
+            url_unique_id = "{}://{}".format(parsed_url.scheme, parsed_url.netloc)
+        if url_unique_id not in self._registered_fs:
+            fs = open_fs(url_unique_id)
+            self._registered_fs[url_unique_id] = fs
+        else:
+            fs = self._registered_fs[url_unique_id]
+        try_counter = 0
+        while try_counter <= FSAccessRegistry.MAX_TRIES:
+            try:
+                # Check if it's a file/concrete object
+                res = fs.isdir(parsed_url.path)
+                # TODO - check if needed: If not, check if it is a directory
+                # if not res:
+                #     res = 
+                return res
+            except:
+                try_counter += 1
+                if try_counter > FSAccessRegistry.MAX_TRIES:
+                    raise
+                print("Re-accessing path: {} ({})".format(url, rw_str))
+        # should not reach here
+        return None
+
 
 
 class FSAccess(object):
@@ -102,4 +130,8 @@ class FSAccess(object):
     @staticmethod
     def exists(path):
         return FSAccessRegistry().exists(path)
+
+    @staticmethod
+    def isdir(path):
+        return FSAccessRegistry().isdir(path)
 
