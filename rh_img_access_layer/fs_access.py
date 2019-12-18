@@ -19,7 +19,13 @@ class FSAccessRegistry(object):
     def __init__(self):
         self._registered_fs = {}
 
+    @staticmethod
+    def _normalize_url(url):
+        if "://" not in url and ":/" in url:
+            url = url.replace(":/", "://")
+
     def _open(self, url, rw_str):
+        url = FSAccessRegistry._normalize_url(url)
         parsed_url = urlparse(url)
         if parsed_url.scheme == "file":
             url_unique_id = "osfs:///"
@@ -53,6 +59,7 @@ class FSAccessRegistry(object):
         return self._open(url, write_str)
 
     def exists(self, url):
+        url = FSAccessRegistry._normalize_url(url)
         parsed_url = urlparse(url)
         if parsed_url.scheme == "file":
             url_unique_id = "osfs:///"
@@ -81,6 +88,7 @@ class FSAccessRegistry(object):
         return None
 
     def isdir(self, url):
+        url = FSAccessRegistry._normalize_url(url)
         parsed_url = urlparse(url)
         if parsed_url.scheme == "file":
             url_unique_id = "osfs:///"
