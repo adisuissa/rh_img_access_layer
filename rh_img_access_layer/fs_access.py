@@ -23,6 +23,7 @@ class FSAccessRegistry(object):
     def _normalize_url(url):
         if "://" not in url and ":/" in url:
             url = url.replace(":/", "://")
+        return url
 
     def _open(self, url, rw_str):
         url = FSAccessRegistry._normalize_url(url)
