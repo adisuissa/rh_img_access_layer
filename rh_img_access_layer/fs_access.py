@@ -1,6 +1,8 @@
 import os
 from fs import open_fs
 from urllib.parse import urlparse
+import google.auth.exceptions
+import time
 
 
 
@@ -120,6 +122,7 @@ class FSAccessRegistry(object):
 
 
 class FSAccess(object):
+    MAX_ATTEMPTS = 3
 
     def __init__(self, _url, binary, read=True):
         self._url = _url
@@ -127,11 +130,18 @@ class FSAccess(object):
         self._read = read
 
     def __enter__(self):
-        if self._read:
-            self._handle = FSAccessRegistry().open_read(self._url, self._binary)
-        else:
-            self._handle = FSAccessRegistry().open_write(self._url, self._binary)
-        return self._handle
+        attempt = 0
+        while attempt < FSAccess.MAX_ATTEMPTS:
+            try:
+                if self._read:
+                    self._handle = FSAccessRegistry().open_read(self._url, self._binary)
+                else:
+                    self._handle = FSAccessRegistry().open_write(self._url, self._binary)
+                return self._handle
+            except google.auth.exceptions.RefreshError as e:
+                attempt += 1
+                time.sleep(attempt)
+                raise e
 
     def __exit__(self, type, value, traceback):
         return self._handle.__exit__(type, value, traceback)
