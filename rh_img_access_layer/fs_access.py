@@ -141,7 +141,8 @@ class FSAccess(object):
             except google.auth.exceptions.RefreshError as e:
                 attempt += 1
                 time.sleep(attempt)
-                raise e
+                if attempt == FSAccess.MAX_ATTEMPTS:
+                    raise e
 
     def __exit__(self, type, value, traceback):
         return self._handle.__exit__(type, value, traceback)
