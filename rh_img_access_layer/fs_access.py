@@ -119,39 +119,47 @@ class FSAccessRegistry(object):
         # should not reach here
         return None
 
+def attempt(func):
+    MAX_ATTEMPTS = 3
+    def wrapper(*args):
+        attempt = 0
+        while attempt < MAX_ATTEMPTS:
+            try:
+                return func(*args)
+            except google.auth.exceptions.RefreshError as e:
+                attempt += 1
+                time.sleep(attempt)
+                if attempt == FSAccess.MAX_ATTEMPTS:
+                    raise e
+    return wrapper
+
 
 
 class FSAccess(object):
-    MAX_ATTEMPTS = 3
 
     def __init__(self, _url, binary, read=True):
         self._url = _url
         self._binary = binary
         self._read = read
 
+    @attempt
     def __enter__(self):
-        attempt = 0
-        while attempt < FSAccess.MAX_ATTEMPTS:
-            try:
-                if self._read:
-                    self._handle = FSAccessRegistry().open_read(self._url, self._binary)
-                else:
-                    self._handle = FSAccessRegistry().open_write(self._url, self._binary)
-                return self._handle
-            except google.auth.exceptions.RefreshError as e:
-                attempt += 1
-                time.sleep(attempt)
-                if attempt == FSAccess.MAX_ATTEMPTS:
-                    raise e
+        if self._read:
+            self._handle = FSAccessRegistry().open_read(self._url, self._binary)
+        else:
+            self._handle = FSAccessRegistry().open_write(self._url, self._binary)
+        return self._handle
 
     def __exit__(self, type, value, traceback):
         return self._handle.__exit__(type, value, traceback)
 
     @staticmethod
+    @attempt
     def exists(path):
         return FSAccessRegistry().exists(path)
 
     @staticmethod
+    @attempt
     def isdir(path):
         return FSAccessRegistry().isdir(path)
 
