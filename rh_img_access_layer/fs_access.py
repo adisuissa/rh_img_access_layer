@@ -129,7 +129,7 @@ def attempt(func):
             except google.auth.exceptions.RefreshError as e:
                 attempt += 1
                 time.sleep(attempt)
-                if attempt == FSAccess.MAX_ATTEMPTS:
+                if attempt == MAX_ATTEMPTS:
                     raise e
     return wrapper
 
