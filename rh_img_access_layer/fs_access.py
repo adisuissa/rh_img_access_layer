@@ -163,3 +163,25 @@ class FSAccess(object):
     def isdir(path):
         return FSAccessRegistry().isdir(path)
 
+    @staticmethod
+    @attempt
+    def isdir(path):
+        return FSAccessRegistry().isdir(path)
+
+    @staticmethod
+    def get_fs_parsed_url(url):
+        parsed_url = urlparse(url)
+        url_prefix = "{}://{}".format(parsed_url.scheme, parsed_url.netloc)
+        return url_prefix, parsed_url.path
+
+    @staticmethod
+    @attempt
+    def fs_create_dir(output_dir):
+        output_dir = FSAccessRegistry._normalize_url(output_dir)
+
+        fs_loc, fs_path = FSAccess.get_fs_parsed_url(output_dir)
+        with fs.open_fs(fs_loc) as out_fs:
+            if not out_fs.exists(fs_path):
+                out_fs.makedirs(fs_path)
+
+
